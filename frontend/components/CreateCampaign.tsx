@@ -55,7 +55,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
     setLoading(true);
     try {
       const goalInOctas = convertAptToOctas(parseFloat(formData.goal));
-      const durationInSeconds = parseInt(formData.duration) * 24 * 60 * 60;
+      const durationInSeconds = parseFloat(formData.duration) * 24 * 60 * 60;
       const deadlineTimestamp = Math.floor(Date.now() / 1000) + durationInSeconds;
 
       const metadata = JSON.stringify({
@@ -67,7 +67,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
         sender: account.address,
         data: {
           function: `${MODULE_ADDRESS}::${MODULE_NAME}::create_campaign`,
-          functionArguments: [goalInOctas, deadlineTimestamp, metadata, MODULE_ADDRESS],
+          functionArguments: [goalInOctas, deadlineTimestamp, metadata],
         },
       });
 
@@ -243,7 +243,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', color: 'white' }}>
-              Campaign Duration (days)
+              Campaign Duration
             </label>
             <select
               value={formData.duration}
@@ -260,6 +260,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
                 cursor: 'pointer'
               }}
             >
+              <option value="0.04166667">1 hour (for testing)</option>
               <option value="1">1 day</option>
               <option value="7">7 days</option>
               <option value="14">14 days</option>
