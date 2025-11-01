@@ -1,9 +1,10 @@
-// Crowdfunding Smart Contract with Proper Escrow
+// Crowdfunding Smart Contract with Campaign Registry
 // sources/crowdfund.move
 
 module crowdfund_admin::crowdfund {
     use std::signer;
     use std::string::String;
+    use std::vector;
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::event;
@@ -23,8 +24,15 @@ module crowdfund_admin::crowdfund {
     const ERROR_CAMPAIGN_NOT_FOUND: u64 = 10;
     const ERROR_INVALID_AMOUNT: u64 = 11;
     const ERROR_CAMPAIGN_SUCCESSFUL: u64 = 12;
+    const ERROR_REGISTRY_NOT_INITIALIZED: u64 = 13;
 
     // === Data Structures ===
+
+    /// Global campaign registry - stores all campaign addresses
+    struct CampaignRegistry has key {
+        campaigns: vector<address>,
+        total_campaigns: u64,
+    }
 
     /// Individual backer's pledge information
     struct Pledge has store, drop, copy {
@@ -39,11 +47,9 @@ module crowdfund_admin::crowdfund {
         total_raised: u64,
         deadline_timestamp: u64,
         off_chain_metadata_id: String,
-        // Using Table for O(1) lookup instead of vector
         backers: Table<address, Pledge>,
         funds_claimed: bool,
         total_refunded: u64,
-        // CRITICAL: Escrow to hold actual funds
         escrow: Coin<AptosCoin>,
     }
 
@@ -81,6 +87,21 @@ module crowdfund_admin::crowdfund {
         total_raised: u64,
     }
 
+    // === Initialization ===
+
+    /// Initialize the campaign registry (call this once after deployment)
+    public entry fun initialize_registry(admin: &signer) {
+        let admin_addr = signer::address_of(admin);
+        
+        // Only allow initialization if registry doesn't exist
+        if (!exists<CampaignRegistry>(admin_addr)) {
+            move_to(admin, CampaignRegistry {
+                campaigns: vector::empty<address>(),
+                total_campaigns: 0,
+            });
+        };
+    }
+
     // === Entry Functions ===
 
     /// Create a new crowdfunding campaign
@@ -88,8 +109,9 @@ module crowdfund_admin::crowdfund {
         creator_signer: &signer,
         goal: u64,
         deadline_timestamp: u64,
-        metadata_id: String
-    ) {
+        metadata_id: String,
+        registry_addr: address,
+    ) acquires CampaignRegistry {
         let creator_addr = signer::address_of(creator_signer);
 
         // Ensure campaign doesn't already exist
@@ -114,6 +136,12 @@ module crowdfund_admin::crowdfund {
             total_refunded: 0,
             escrow,
         });
+
+        // Add to registry
+        assert!(exists<CampaignRegistry>(registry_addr), ERROR_REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global_mut<CampaignRegistry>(registry_addr);
+        vector::push_back(&mut registry.campaigns, creator_addr);
+        registry.total_campaigns = registry.total_campaigns + 1;
 
         // Emit creation event
         event::emit(CampaignCreatedEvent {
@@ -257,7 +285,46 @@ module crowdfund_admin::crowdfund {
         });
     }
 
-    // === View Functions (for frontend integration) ===
+    // === View Functions ===
+
+    #[view]
+    /// Get all campaign addresses from registry
+    public fun get_all_campaigns(registry_addr: address): vector<address> acquires CampaignRegistry {
+        assert!(exists<CampaignRegistry>(registry_addr), ERROR_REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<CampaignRegistry>(registry_addr);
+        registry.campaigns
+    }
+
+    #[view]
+    /// Get total number of campaigns
+    public fun get_total_campaigns(registry_addr: address): u64 acquires CampaignRegistry {
+        assert!(exists<CampaignRegistry>(registry_addr), ERROR_REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<CampaignRegistry>(registry_addr);
+        registry.total_campaigns
+    }
+
+    #[view]
+    /// Get paginated campaigns (start_index, limit)
+    public fun get_campaigns_paginated(
+        registry_addr: address,
+        start_index: u64,
+        limit: u64
+    ): vector<address> acquires CampaignRegistry {
+        assert!(exists<CampaignRegistry>(registry_addr), ERROR_REGISTRY_NOT_INITIALIZED);
+        let registry = borrow_global<CampaignRegistry>(registry_addr);
+        let total = vector::length(&registry.campaigns);
+        
+        let result = vector::empty<address>();
+        let end_index = if (start_index + limit > total) { total } else { start_index + limit };
+        
+        let i = start_index;
+        while (i < end_index) {
+            vector::push_back(&mut result, *vector::borrow(&registry.campaigns, i));
+            i = i + 1;
+        };
+        
+        result
+    }
 
     #[view]
     /// Get basic campaign information

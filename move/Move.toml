@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = []
 
 [addresses]
-crowdfund_admin = "0xff005f02f214a71afb867ada60e499beab644bcbe66fbd57115bb5cbac38c0b6"
+crowdfund_admin = "0x81810d53b183eca4645f5bc37fe2cfb3d53af83ed8a6af3b4df7b04f703c8050"
 
 [dependencies.AptosFramework]
 git = "https://github.com/aptos-labs/aptos-core.git"

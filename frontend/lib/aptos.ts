@@ -1,6 +1,6 @@
 // lib/aptos.ts
 import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
-import { MODULE_ADDRESS, MODULE_NAME } from "./constants";
+import { MODULE_ADDRESS, MODULE_NAME, REGISTRY_ADDRESS } from "./constants";
 
 const config = new AptosConfig({ network: Network.TESTNET });
 export const aptos = new Aptos(config);
@@ -22,6 +22,52 @@ export interface BackerPledge {
 }
 
 export const viewFunctions = {
+  // Registry functions
+  getAllCampaigns: async (): Promise<string[]> => {
+    try {
+      const result = await aptos.view({
+        payload: {
+          function: `${MODULE_ADDRESS}::${MODULE_NAME}::get_all_campaigns`,
+          functionArguments: [REGISTRY_ADDRESS],
+        },
+      });
+      return result[0] as string[];
+    } catch (error) {
+      console.error("Error fetching all campaigns:", error);
+      return [];
+    }
+  },
+
+  getTotalCampaigns: async (): Promise<number> => {
+    try {
+      const result = await aptos.view({
+        payload: {
+          function: `${MODULE_ADDRESS}::${MODULE_NAME}::get_total_campaigns`,
+          functionArguments: [REGISTRY_ADDRESS],
+        },
+      });
+      return Number(result[0]);
+    } catch (error) {
+      console.error("Error fetching total campaigns:", error);
+      return 0;
+    }
+  },
+
+  getCampaignsPaginated: async (startIndex: number, limit: number): Promise<string[]> => {
+    try {
+      const result = await aptos.view({
+        payload: {
+          function: `${MODULE_ADDRESS}::${MODULE_NAME}::get_campaigns_paginated`,
+          functionArguments: [REGISTRY_ADDRESS, startIndex, limit],
+        },
+      });
+      return result[0] as string[];
+    } catch (error) {
+      console.error("Error fetching paginated campaigns:", error);
+      return [];
+    }
+  },
+
   getCampaignInfo: async (campaignAddr: string): Promise<CampaignInfo | null> => {
     try {
       const result = await aptos.view({

@@ -38,7 +38,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
         sender: account.address,
         data: {
           function: `${MODULE_ADDRESS}::${MODULE_NAME}::create_campaign`,
-          functionArguments: [goalInOctas, deadlineTimestamp, metadata],
+          functionArguments: [goalInOctas, deadlineTimestamp, metadata, MODULE_ADDRESS],
         },
       });
 

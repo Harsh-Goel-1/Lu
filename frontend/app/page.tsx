@@ -1,22 +1,37 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateCampaign } from "@/components/CreateCampaign";
 import { CampaignCard } from "@/components/CampaignCard";
+import { viewFunctions } from "@/lib/aptos";
 
 export default function HomePage() {
   const [campaigns, setCampaigns] = useState<string[]>([]);
   const [searchAddress, setSearchAddress] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showAllCampaigns, setShowAllCampaigns] = useState(false);
-
-  // Sample active campaigns - you can populate this with your known campaigns
-  const sampleCampaigns = [
-    "0x921e0edc69e87c42804886b969354c91306bef6d96906325930b887a05b70069"
-  ];
+  const [loading, setLoading] = useState(false);
+  const [totalCampaigns, setTotalCampaigns] = useState(0);
 
   const handleAddCampaign = () => {
-    // Refresh campaigns
+    // Refresh campaigns after creating
+    if (showAllCampaigns) {
+      loadAllCampaigns();
+    }
+  };
+
+  const loadAllCampaigns = async () => {
+    setLoading(true);
+    try {
+      const allCampaigns = await viewFunctions.getAllCampaigns();
+      const total = await viewFunctions.getTotalCampaigns();
+      setCampaigns(allCampaigns);
+      setTotalCampaigns(total);
+    } catch (error) {
+      console.error("Error loading campaigns:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSearch = () => {
@@ -27,18 +42,17 @@ export default function HomePage() {
     }
   };
 
-  const handleShowAllCampaigns = () => {
-    setShowAllCampaigns(!showAllCampaigns);
-    if (!showAllCampaigns && sampleCampaigns.length > 0) {
-      // Merge sample campaigns with existing ones
-      const allCampaigns = Array.from(new Set([...campaigns, ...sampleCampaigns]));
-      setCampaigns(allCampaigns);
+  const handleShowAllCampaigns = async () => {
+    const newState = !showAllCampaigns;
+    setShowAllCampaigns(newState);
+    
+    if (newState) {
+      await loadAllCampaigns();
+    } else {
+      setCampaigns([]);
+      setTotalCampaigns(0);
     }
   };
-
-  const displayedCampaigns = showAllCampaigns && sampleCampaigns.length > 0 
-    ? Array.from(new Set([...campaigns, ...sampleCampaigns]))
-    : campaigns;
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -97,6 +111,7 @@ export default function HomePage() {
 
         <button
           onClick={handleShowAllCampaigns}
+          disabled={loading}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -106,19 +121,20 @@ export default function HomePage() {
             color: 'white',
             border: '1px solid ' + (showAllCampaigns ? '#10b981' : '#374151'),
             borderRadius: '8px',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '1rem',
-            fontWeight: showAllCampaigns ? '600' : 'normal'
+            fontWeight: showAllCampaigns ? '600' : 'normal',
+            opacity: loading ? 0.7 : 1
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = showAllCampaigns ? '#047857' : '#374151';
+            if (!loading) e.currentTarget.style.backgroundColor = showAllCampaigns ? '#047857' : '#374151';
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = showAllCampaigns ? '#059669' : '#1f2937';
+            if (!loading) e.currentTarget.style.backgroundColor = showAllCampaigns ? '#059669' : '#1f2937';
           }}
         >
-          <span>📋</span>
-          {showAllCampaigns ? 'Showing All Campaigns' : 'All Active Campaigns'}
+          <span>{loading ? '⏳' : '📋'}</span>
+          {loading ? 'Loading...' : showAllCampaigns ? `Showing All (${totalCampaigns})` : 'All Active Campaigns'}
         </button>
       </div>
 
@@ -176,7 +192,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {displayedCampaigns.length === 0 ? (
+      {campaigns.length === 0 && !loading ? (
         <div style={{ textAlign: 'center', paddingTop: '4rem', paddingBottom: '4rem' }}>
           <div style={{
             width: '96px',
@@ -195,8 +211,13 @@ export default function HomePage() {
             No campaigns yet
           </h3>
           <p style={{ color: '#6b7280' }}>
-            Create a campaign or search for existing ones
+            Create a campaign or click "All Active Campaigns" to discover projects
           </p>
+        </div>
+      ) : loading ? (
+        <div style={{ textAlign: 'center', paddingTop: '4rem', color: '#9ca3af' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+          <p>Loading campaigns...</p>
         </div>
       ) : (
         <>
@@ -206,14 +227,14 @@ export default function HomePage() {
             color: '#9ca3af',
             fontSize: '0.875rem'
           }}>
-            Showing {displayedCampaigns.length} campaign{displayedCampaigns.length !== 1 ? 's' : ''}
+            Showing {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''}
           </div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
             gap: '1.5rem'
           }}>
-            {displayedCampaigns.map((address) => (
+            {campaigns.map((address) => (
               <CampaignCard key={address} address={address} />
             ))}
           </div>
