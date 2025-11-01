@@ -9,9 +9,7 @@
 
 ## 📹 Demo
 
-[**Watch Demo Video**](https://drive.google.com/file/d/1_Iv1nXJaPG1Lg49KGOpOLnc9UhgDuIqu/view?usp=sharing)
-
-<video src="lu_demo.mp4" controls width="600"></video>
+https://github.com/user-attachments/assets/db90dede-da3e-43b3-9dbc-9452634426f1
 
 ---
 
