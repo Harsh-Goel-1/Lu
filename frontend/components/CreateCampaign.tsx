@@ -24,20 +24,22 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
     }
     setAiLoading(true);
     try {
-      const response = await fetch("/api/suggest-description", {
+      const response = await fetch("https://cblkp67efurcbvlcbz7m4e6pvi0infqs.lambda-url.us-east-1.on.aws/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: formData.title, goal: formData.goal || "100" })
       });
       const data = await response.json();
+      console.log("API Response:", data);
       if (data.description) {
         setFormData({ ...formData, description: data.description });
       } else {
-        alert("Failed to generate suggestion");
+        console.error("No description in response:", data);
+        alert(`Failed: ${data.error || 'No description returned'}`);
       }
     } catch (error) {
       console.error("AI suggestion error:", error);
-      alert("Failed to generate suggestion");
+      alert(`Error: ${error}`);
     } finally {
       setAiLoading(false);
     }

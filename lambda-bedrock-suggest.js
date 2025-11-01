@@ -1,16 +1,6 @@
 const { BedrockRuntimeClient, InvokeModelCommand } = require("@aws-sdk/client-bedrock-runtime");
 
 exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS'
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
-
   try {
     const { title, goal } = JSON.parse(event.body);
     
@@ -32,14 +22,12 @@ exports.handler = async (event) => {
     
     return {
       statusCode: 200,
-      headers,
       body: JSON.stringify({ description: result.content[0].text })
     };
   } catch (error) {
     console.error("Error:", error);
     return {
       statusCode: 500,
-      headers,
       body: JSON.stringify({ error: error.message })
     };
   }
