@@ -9,12 +9,39 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
   const { signAndSubmitTransaction, connected, account } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [formData, setFormData] = useState({
     goal: "",
     duration: "7",
     title: "",
     description: "",
   });
+
+  const handleAiSuggest = async () => {
+    if (!formData.title) {
+      alert("Please enter a campaign title first");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const response = await fetch("/api/suggest-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: formData.title, goal: formData.goal || "100" })
+      });
+      const data = await response.json();
+      if (data.description) {
+        setFormData({ ...formData, description: data.description });
+      } else {
+        alert("Failed to generate suggestion");
+      }
+    } catch (error) {
+      console.error("AI suggestion error:", error);
+      alert("Failed to generate suggestion");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,9 +165,34 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', color: 'white' }}>
-              Description
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'white' }}>
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={handleAiSuggest}
+                disabled={aiLoading}
+                style={{
+                  padding: '0.25rem 0.75rem',
+                  backgroundColor: aiLoading ? '#374151' : '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  cursor: aiLoading ? 'not-allowed' : 'pointer'
+                }}
+                onMouseOver={(e) => {
+                  if (!aiLoading) e.currentTarget.style.backgroundColor = '#6d28d9';
+                }}
+                onMouseOut={(e) => {
+                  if (!aiLoading) e.currentTarget.style.backgroundColor = '#7c3aed';
+                }}
+              >
+                {aiLoading ? '⏳ Generating...' : '✨ AI Suggest'}
+              </button>
+            </div>
             <textarea
               required
               value={formData.description}
