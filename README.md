@@ -11,7 +11,7 @@
 
 [**Watch Demo Video**](https://drive.google.com/file/d/1_Iv1nXJaPG1Lg49KGOpOLnc9UhgDuIqu/view?usp=sharing)
 
-<video src="video.mp4" controls width="600"></video>
+<video src="lu_demo.mp4" controls width="600"></video>
 
 ---
 
