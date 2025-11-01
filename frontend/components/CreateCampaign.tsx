@@ -55,7 +55,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
     setLoading(true);
     try {
       const goalInOctas = convertAptToOctas(parseFloat(formData.goal));
-      const durationInSeconds = parseFloat(formData.duration) * 24 * 60 * 60;
+      const durationInSeconds = Math.floor(parseFloat(formData.duration) * 24 * 60 * 60);
       const deadlineTimestamp = Math.floor(Date.now() / 1000) + durationInSeconds;
 
       const metadata = JSON.stringify({
@@ -67,7 +67,7 @@ export function CreateCampaign({ onSuccess }: { onSuccess?: () => void }) {
         sender: account.address,
         data: {
           function: `${MODULE_ADDRESS}::${MODULE_NAME}::create_campaign`,
-          functionArguments: [goalInOctas, deadlineTimestamp, metadata],
+          functionArguments: [goalInOctas, deadlineTimestamp, metadata, MODULE_ADDRESS],
         },
       });
 

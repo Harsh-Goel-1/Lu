@@ -80,11 +80,13 @@ export default function HomePage() {
 
       <div style={{
         display: 'flex',
+        flexDirection: 'row',
         flexWrap: 'wrap',
         gap: '1rem',
         marginBottom: '2rem',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        padding: '0 1rem'
       }}>
         <CreateCampaign onSuccess={handleAddCampaign} />
         
@@ -231,8 +233,11 @@ export default function HomePage() {
           </div>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '1.5rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '1.5rem',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0 2rem'
           }}>
             {campaigns.map((address) => (
               <CampaignCard key={address} address={address} />
