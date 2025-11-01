@@ -8,8 +8,15 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 📹 Demo
+### **1. Creating campaign with AI assist and backing campaigns**
 
 https://github.com/user-attachments/assets/db90dede-da3e-43b3-9dbc-9452634426f1
+
+
+### **2. Refund/Claim when campaign fail/succeed**
+
+https://github.com/user-attachments/assets/4fc72aa1-4b51-4219-82cd-9c9b45beadc9
+
 
 ---
 
