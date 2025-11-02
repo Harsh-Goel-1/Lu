@@ -260,7 +260,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Aptos Labs** - For the amazing blockchain infrastructure
+- **Rise In** - For sponsoring the aptos track
+- **Amazon Web Services** - For providing free access to AWS Lambda and Bedrock and much more
+- - **Aptos Labs** - For the amazing blockchain infrastructure
 - **Move Language** - For secure smart contract development
 - **Community** - For feedback and support
 
