@@ -7,11 +7,13 @@ import { viewFunctions } from "@/lib/aptos";
 
 export default function HomePage() {
   const [campaigns, setCampaigns] = useState<string[]>([]);
+  const [allCampaigns, setAllCampaigns] = useState<string[]>([]);
   const [searchAddress, setSearchAddress] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [showAllCampaigns, setShowAllCampaigns] = useState(false);
   const [loading, setLoading] = useState(false);
   const [totalCampaigns, setTotalCampaigns] = useState(0);
+  const [filter, setFilter] = useState<'all' | 'active' | 'successful' | 'failed'>('all');
 
   const handleAddCampaign = () => {
     // Refresh campaigns after creating
@@ -25,6 +27,7 @@ export default function HomePage() {
     try {
       const allCampaigns = await viewFunctions.getAllCampaigns();
       const total = await viewFunctions.getTotalCampaigns();
+      setAllCampaigns(allCampaigns);
       setCampaigns(allCampaigns);
       setTotalCampaigns(total);
     } catch (error) {
@@ -50,7 +53,47 @@ export default function HomePage() {
       await loadAllCampaigns();
     } else {
       setCampaigns([]);
+      setAllCampaigns([]);
       setTotalCampaigns(0);
+      setFilter('all');
+    }
+  };
+
+  const handleFilterChange = async (newFilter: 'all' | 'active' | 'successful' | 'failed') => {
+    setFilter(newFilter);
+    setLoading(true);
+
+    try {
+      if (newFilter === 'all') {
+        setCampaigns(allCampaigns);
+      } else {
+        const filtered: string[] = [];
+        
+        for (const addr of allCampaigns) {
+          const info = await viewFunctions.getCampaignInfo(addr);
+          if (!info) continue;
+
+          const deadlineDate = new Date(Number(info.deadlineTimestamp) * 1000);
+          const isActive = deadlineDate.getTime() > Date.now() && !info.fundsClaimed;
+          const goalApt = Number(info.goal);
+          const raisedApt = Number(info.totalRaised);
+          const isSuccessful = raisedApt >= goalApt;
+
+          if (newFilter === 'active' && isActive) {
+            filtered.push(addr);
+          } else if (newFilter === 'successful' && !isActive && isSuccessful) {
+            filtered.push(addr);
+          } else if (newFilter === 'failed' && !isActive && !isSuccessful) {
+            filtered.push(addr);
+          }
+        }
+        
+        setCampaigns(filtered);
+      }
+    } catch (error) {
+      console.error("Error filtering campaigns:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,9 +179,111 @@ export default function HomePage() {
           }}
         >
           <span>{loading ? '⏳' : '📋'}</span>
-          {loading ? 'Loading...' : showAllCampaigns ? `Showing All (${totalCampaigns})` : 'All Active Campaigns'}
+          {loading ? 'Loading...' : showAllCampaigns ? `Showing All (${totalCampaigns})` : 'All Campaigns'}
         </button>
       </div>
+
+      {showAllCampaigns && campaigns.length > 0 && (
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+          marginBottom: '2rem',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '0 1rem'
+        }}>
+          <span style={{ color: '#9ca3af', fontSize: '0.875rem', marginRight: '0.5rem' }}>Filter:</span>
+          
+          <button
+            onClick={() => handleFilterChange('all')}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: filter === 'all' ? '#2563eb' : '#1f2937',
+              color: 'white',
+              border: '1px solid ' + (filter === 'all' ? '#3b82f6' : '#374151'),
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              fontWeight: filter === 'all' ? '600' : 'normal'
+            }}
+            onMouseOver={(e) => {
+              if (filter !== 'all') e.currentTarget.style.backgroundColor = '#374151';
+            }}
+            onMouseOut={(e) => {
+              if (filter !== 'all') e.currentTarget.style.backgroundColor = '#1f2937';
+            }}
+          >
+            All
+          </button>
+
+          <button
+            onClick={() => handleFilterChange('active')}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: filter === 'active' ? '#059669' : '#1f2937',
+              color: 'white',
+              border: '1px solid ' + (filter === 'active' ? '#10b981' : '#374151'),
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              fontWeight: filter === 'active' ? '600' : 'normal'
+            }}
+            onMouseOver={(e) => {
+              if (filter !== 'active') e.currentTarget.style.backgroundColor = '#374151';
+            }}
+            onMouseOut={(e) => {
+              if (filter !== 'active') e.currentTarget.style.backgroundColor = '#1f2937';
+            }}
+          >
+            🟢 Active
+          </button>
+
+          <button
+            onClick={() => handleFilterChange('successful')}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: filter === 'successful' ? '#2563eb' : '#1f2937',
+              color: 'white',
+              border: '1px solid ' + (filter === 'successful' ? '#3b82f6' : '#374151'),
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              fontWeight: filter === 'successful' ? '600' : 'normal'
+            }}
+            onMouseOver={(e) => {
+              if (filter !== 'successful') e.currentTarget.style.backgroundColor = '#374151';
+            }}
+            onMouseOut={(e) => {
+              if (filter !== 'successful') e.currentTarget.style.backgroundColor = '#1f2937';
+            }}
+          >
+            ✅ Successful
+          </button>
+
+          <button
+            onClick={() => handleFilterChange('failed')}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: filter === 'failed' ? '#dc2626' : '#1f2937',
+              color: 'white',
+              border: '1px solid ' + (filter === 'failed' ? '#ef4444' : '#374151'),
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              fontWeight: filter === 'failed' ? '600' : 'normal'
+            }}
+            onMouseOver={(e) => {
+              if (filter !== 'failed') e.currentTarget.style.backgroundColor = '#374151';
+            }}
+            onMouseOut={(e) => {
+              if (filter !== 'failed') e.currentTarget.style.backgroundColor = '#1f2937';
+            }}
+          >
+            ❌ Failed
+          </button>
+        </div>
+      )}
 
       {showSearch && (
         <div style={{ maxWidth: '42rem', margin: '0 auto 2rem' }}>
